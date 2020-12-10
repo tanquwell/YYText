@@ -524,6 +524,10 @@ return style. _attr_;
     return [self yy_attribute:YYTextBackedStringAttributeName atIndex:index];
 }
 
+- (YYTextBoldPath *)yy_textBoldPath {
+    return [self yy_attribute:YYTextBoldPathAttributeName atIndex:0];;
+}
+
 - (CGAffineTransform)yy_textGlyphTransform {
     return [self yy_textGlyphTransformAtIndex:0];
 }
@@ -964,6 +968,10 @@ return style. _attr_;
     [self yy_setTextBackgroundBorder:textBackgroundBorder range:NSMakeRange(0, self.length)];
 }
 
+- (void)setYy_textBoldPath:(YYTextBoldPath *)yy_textBoldPath {
+    [self yy_setTextBoldPath:yy_textBoldPath];
+}
+
 - (void)setYy_textGlyphTransform:(CGAffineTransform)textGlyphTransform {
     [self yy_setTextGlyphTransform:textGlyphTransform range:NSMakeRange(0, self.length)];
 }
@@ -1254,6 +1262,10 @@ return style. _attr_;
 
 - (void)yy_setTextBackgroundBorder:(YYTextBorder *)textBackgroundBorder range:(NSRange)range {
     [self yy_setAttribute:YYTextBackgroundBorderAttributeName value:textBackgroundBorder range:range];
+}
+
+- (void)yy_setTextBoldPath:(YYTextBoldPath *)yy_textBoldPath {
+    [self yy_setAttribute:YYTextBoldPathAttributeName value:yy_textBoldPath];
 }
 
 - (void)yy_setTextAttachment:(YYTextAttachment *)textAttachment range:(NSRange)range {

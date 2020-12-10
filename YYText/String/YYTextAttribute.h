@@ -119,6 +119,11 @@ UIKIT_EXTERN NSString *const YYTextStrikethroughAttributeName;
 /// The border will be drawn above the text glyphs.
 UIKIT_EXTERN NSString *const YYTextBorderAttributeName;
 
+/// 绘制文字底部，并且按照文字轨迹加粗绘制的相同字体，描边效果
+/// 区别于CoreText的strokeWidth 属性，CoreText设置的strokeWidth更像是在操作文字填充部分的内外部边界路径的粗细
+/// 而PathBorder是完全按照原有的字体轨迹绘制，只是笔迹加粗了
+UIKIT_EXTERN NSString *const YYTextBoldPathAttributeName;
+
 /// The value of this attribute is a `YYTextBorder` object.
 /// Use this attribute to add background border or background color to a range of text.
 /// The border will be drawn below the text glyphs.
@@ -166,7 +171,7 @@ typedef void(^YYTextAction)(UIView *containerView, NSAttributedString *text, NSR
 
 /**
  YYTextBackedString objects are used by the NSAttributedString class cluster
- as the values for text backed string attributes (stored in the attributed 
+ as the values for text backed string attributes (stored in the attributed
  string under the key named YYTextBackedStringAttributeName).
  
  It may used for copy/paste plain text from attributed string.
@@ -184,7 +189,7 @@ typedef void(^YYTextAction)(UIView *containerView, NSAttributedString *text, NSR
  the key named YYTextBindingAttributeName).
  
  Add this to a range of text will make the specified characters 'binding together'.
- YYTextView will treat the range of text as a single character during text 
+ YYTextView will treat the range of text as a single character during text
  selection and edit.
  */
 @interface YYTextBinding : NSObject <NSCoding, NSCopying>
@@ -254,19 +259,30 @@ typedef void(^YYTextAction)(UIView *containerView, NSAttributedString *text, NSR
 @property (nonatomic) CGLineJoin lineJoin;                    ///< border line join
 @property (nonatomic) UIEdgeInsets insets;                    ///< border insets for text bounds
 @property (nonatomic) CGFloat cornerRadius;                   ///< border corder radius
+@property (nonatomic) CGFloat lineHeightMultiple;             /// <无他>背景色的行高，默认为1
 @property (nullable, nonatomic, strong) YYTextShadow *shadow; ///< border shadow
 @property (nullable, nonatomic, strong) UIColor *fillColor;   ///< inner fill color
 @end
 
 
+/// 在文字底部，加粗绘制文字的轨迹
+@interface YYTextBoldPath : NSObject <NSCoding, NSCopying>
++ (instancetype)boldPathWithLineWidth:(CGFloat)lineWidth strokeColor:(UIColor *)strokeColor;
+@property (nonatomic) CGFloat lineWidth;
+@property (nullable, nonatomic, strong) UIColor *strokeColor;
+@property (nonatomic) CGLineJoin lineJoin;
+@property (nonatomic) CGLineCap lineGap;
+@end
+
+
 /**
- YYTextAttachment objects are used by the NSAttributedString class cluster 
- as the values for attachment attributes (stored in the attributed string under 
+ YYTextAttachment objects are used by the NSAttributedString class cluster
+ as the values for attachment attributes (stored in the attributed string under
  the key named YYTextAttachmentAttributeName).
  
  When display an attributed string which contains `YYTextAttachment` object,
- the content will be placed in text metric. If the content is `UIImage`, 
- then it will be drawn to CGContext; if the content is `UIView` or `CALayer`, 
+ the content will be placed in text metric. If the content is `UIImage`,
+ then it will be drawn to CGContext; if the content is `UIView` or `CALayer`,
  then it will be added to the text container's view or layer.
  */
 @interface YYTextAttachment : NSObject<NSCoding, NSCopying>
@@ -283,9 +299,9 @@ typedef void(^YYTextAction)(UIView *containerView, NSAttributedString *text, NSR
  as the values for touchable highlight attributes (stored in the attributed string
  under the key named YYTextHighlightAttributeName).
  
- When display an attributed string in `YYLabel` or `YYTextView`, the range of 
- highlight text can be toucheds down by users. If a range of text is turned into 
- highlighted state, the `attributes` in `YYTextHighlight` will be used to modify 
+ When display an attributed string in `YYLabel` or `YYTextView`, the range of
+ highlight text can be toucheds down by users. If a range of text is turned into
+ highlighted state, the `attributes` in `YYTextHighlight` will be used to modify
  (set or remove) the original attributes in the range for display.
  */
 @interface YYTextHighlight : NSObject <NSCoding, NSCopying>

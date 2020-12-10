@@ -34,6 +34,10 @@ NSString *const YYTextUnderlineAttributeName = @"YYTextUnderline";
 NSString *const YYTextStrikethroughAttributeName = @"YYTextStrikethrough";
 NSString *const YYTextBorderAttributeName = @"YYTextBorder";
 NSString *const YYTextBackgroundBorderAttributeName = @"YYTextBackgroundBorder";
+/* 新增属性*/
+NSString *const YYTextBoldPathAttributeName = @"YYTextBoldPath";
+/* end */
+
 NSString *const YYTextBlockBorderAttributeName = @"YYTextBlockBorder";
 NSString *const YYTextAttachmentAttributeName = @"YYTextAttachment";
 NSString *const YYTextHighlightAttributeName = @"YYTextHighlight";
@@ -113,7 +117,7 @@ YYTextAttributeType YYTextAttributeGetType(NSString *name){
         dic[YYTextGlyphTransformAttributeName] = YYText;
     });
     NSNumber *num = dic[name];
-    if (num != nil) return num.integerValue;
+    if (num) return num.integerValue;
     return YYTextAttributeTypeNone;
 }
 
@@ -302,6 +306,7 @@ YYTextAttributeType YYTextAttributeGetType(NSString *name){
 - (instancetype)init {
     self = [super init];
     self.lineStyle = YYTextLineStyleSingle;
+    self.lineHeightMultiple = 1;
     return self;
 }
 
@@ -312,7 +317,9 @@ YYTextAttributeType YYTextAttributeGetType(NSString *name){
     [aCoder encodeObject:@(self.lineJoin) forKey:@"lineJoin"];
     [aCoder encodeObject:[NSValue valueWithUIEdgeInsets:self.insets] forKey:@"insets"];
     [aCoder encodeObject:@(self.cornerRadius) forKey:@"cornerRadius"];
+    [aCoder encodeObject:@(self.lineHeightMultiple) forKey:@"lineHeightMultiple"];
     [aCoder encodeObject:self.shadow forKey:@"shadow"];
+    [aCoder encodeObject:self.fillColor forKey:@"fillColor"];
     [aCoder encodeObject:self.fillColor forKey:@"fillColor"];
 }
 
@@ -324,6 +331,7 @@ YYTextAttributeType YYTextAttributeGetType(NSString *name){
     _lineJoin = (CGLineJoin)((NSNumber *)[aDecoder decodeObjectForKey:@"join"]).unsignedIntegerValue;
     _insets = ((NSValue *)[aDecoder decodeObjectForKey:@"insets"]).UIEdgeInsetsValue;
     _cornerRadius = ((NSNumber *)[aDecoder decodeObjectForKey:@"cornerRadius"]).doubleValue;
+    _lineHeightMultiple = ((NSNumber *)[aDecoder decodeObjectForKey:@"lineHeightMultiple"]).doubleValue;
     _shadow = [aDecoder decodeObjectForKey:@"shadow"];
     _fillColor = [aDecoder decodeObjectForKey:@"fillColor"];
     return self;
@@ -344,6 +352,41 @@ YYTextAttributeType YYTextAttributeGetType(NSString *name){
 
 @end
 
+@implementation YYTextBoldPath
+
++ (instancetype)boldPathWithLineWidth:(CGFloat)lineWidth strokeColor:(nonnull UIColor *)strokeColor{
+    YYTextBoldPath *boldPath = [self new];
+    boldPath.lineWidth = lineWidth;
+    boldPath.strokeColor = strokeColor;
+    return boldPath;
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder {
+    [aCoder encodeObject:@(self.lineWidth) forKey:@"lineWidth"];
+    [aCoder encodeObject:self.strokeColor forKey:@"strokeColor"];
+    [aCoder encodeObject:@(self.lineJoin) forKey:@"lineJoin"];
+    [aCoder encodeObject:@(self.lineGap)forKey:@"lineGap"];
+}
+
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super init];
+    _lineWidth = ((NSNumber *)[aDecoder decodeObjectForKey:@"lineWidth"]).doubleValue;
+    _strokeColor = [aDecoder decodeObjectForKey:@"strokeColor"];
+    _lineJoin = (CGLineJoin)((NSNumber *)[aDecoder decodeObjectForKey:@"lineJoin"]).unsignedIntegerValue;
+    _lineGap = (CGLineCap)((NSNumber *)[aDecoder decodeObjectForKey:@"lineGap"]).unsignedIntegerValue;
+    return self;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    typeof(self) one = [self.class new];
+    one.lineWidth = self.lineWidth;
+    one.strokeColor = self.strokeColor;
+    one.lineJoin = self.lineJoin;
+    one.lineGap = self.lineGap;
+    return one;
+}
+
+@end
 
 @implementation YYTextAttachment
 

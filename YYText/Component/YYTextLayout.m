@@ -93,6 +93,7 @@ static CGColorRef YYTextGetCGColor(CGColorRef color) {
     BOOL _pathFillEvenOdd;
     CGFloat _pathLineWidth;
     BOOL _verticalForm;
+    YYTextVerticalAlignment _textVerticalAlignment;
     NSUInteger _maximumNumberOfRows;
     YYTextTruncationType _truncationType;
     NSAttributedString *_truncationToken;
@@ -134,6 +135,7 @@ static CGColorRef YYTextGetCGColor(CGColorRef color) {
     one->_pathFillEvenOdd = _pathFillEvenOdd;
     one->_pathLineWidth = _pathLineWidth;
     one->_verticalForm = _verticalForm;
+    one->_textVerticalAlignment = _textVerticalAlignment;
     one->_maximumNumberOfRows = _maximumNumberOfRows;
     one->_truncationType = _truncationType;
     one->_truncationToken = _truncationToken.copy;
@@ -154,6 +156,7 @@ static CGColorRef YYTextGetCGColor(CGColorRef color) {
     [aCoder encodeBool:_pathFillEvenOdd forKey:@"pathFillEvenOdd"];
     [aCoder encodeDouble:_pathLineWidth forKey:@"pathLineWidth"];
     [aCoder encodeBool:_verticalForm forKey:@"verticalForm"];
+    [aCoder encodeInteger:_textVerticalAlignment forKey:@"textVerticalAlignment"];
     [aCoder encodeInteger:_maximumNumberOfRows forKey:@"maximumNumberOfRows"];
     [aCoder encodeInteger:_truncationType forKey:@"truncationType"];
     [aCoder encodeObject:_truncationToken forKey:@"truncationToken"];
@@ -172,6 +175,7 @@ static CGColorRef YYTextGetCGColor(CGColorRef color) {
     _pathFillEvenOdd = [aDecoder decodeBoolForKey:@"pathFillEvenOdd"];
     _pathLineWidth = [aDecoder decodeDoubleForKey:@"pathLineWidth"];
     _verticalForm = [aDecoder decodeBoolForKey:@"verticalForm"];
+    _textVerticalAlignment= [aDecoder decodeIntegerForKey:@"textVerticalAlignment"];
     _maximumNumberOfRows = [aDecoder decodeIntegerForKey:@"maximumNumberOfRows"];
     _truncationType = [aDecoder decodeIntegerForKey:@"truncationType"];
     _truncationToken = [aDecoder decodeObjectForKey:@"truncationToken"];
@@ -269,6 +273,14 @@ dispatch_semaphore_signal(_lock);
     Setter(_verticalForm = verticalForm);
 }
 
+- (void)setTextVerticalAlignment:(YYTextVerticalAlignment)textVerticalAlignment {
+    Setter(_textVerticalAlignment = textVerticalAlignment);
+}
+
+- (YYTextVerticalAlignment)textVerticalAlignment {
+    Getter(NSUInteger textVerticalAlignment = _textVerticalAlignment) return textVerticalAlignment;
+}
+
 - (NSUInteger)maximumNumberOfRows {
     Getter(NSUInteger num = _maximumNumberOfRows) return num;
 }
@@ -330,6 +342,7 @@ dispatch_semaphore_signal(_lock);
 @property (nonatomic, readwrite) BOOL containsHighlight;
 @property (nonatomic, readwrite) BOOL needDrawBlockBorder;
 @property (nonatomic, readwrite) BOOL needDrawBackgroundBorder;
+@property (nonatomic, readwrite) BOOL needDrawBoldPath;
 @property (nonatomic, readwrite) BOOL needDrawShadow;
 @property (nonatomic, readwrite) BOOL needDrawUnderline;
 @property (nonatomic, readwrite) BOOL needDrawText;
@@ -409,9 +422,9 @@ dispatch_semaphore_signal(_lock);
         if (8.3 <= systemVersionDouble && systemVersionDouble < 9) {
             needFixJoinedEmojiBug = YES;
         }
-        if (systemVersionDouble >= 10) {
-            needFixLayoutSizeBug = YES;
-        }
+//        if (systemVersionDouble >= 10) {
+//            needFixLayoutSizeBug = YES;
+//        }
     });
     if (needFixJoinedEmojiBug) {
         [((NSMutableAttributedString *)text) yy_setClearColorToJoinedEmoji];
@@ -525,7 +538,9 @@ dispatch_semaphore_signal(_lock);
         CGPoint position;
         position.x = cgPathBox.origin.x + ctLineOrigin.x;
         position.y = cgPathBox.size.height + cgPathBox.origin.y - ctLineOrigin.y;
-        
+        if (layout.container.textVerticalAlignment == YYTextVerticalAlignmentBottom) {
+            
+        }
         YYTextLine *line = [YYTextLine lineWithCTLine:ctLine position:position vertical:isVerticalForm];
         CGRect rect = line.bounds;
         
@@ -695,7 +710,13 @@ dispatch_semaphore_signal(_lock);
                     [attrs removeObjectsForKeys:[NSMutableAttributedString yy_allDiscontinuousAttributeKeys]];
                     CTFontRef font = (__bridge CFTypeRef)attrs[(id)kCTFontAttributeName];
                     CGFloat fontSize = font ? CTFontGetSize(font) : 12.0;
-                    UIFont *uiFont = [UIFont systemFontOfSize:fontSize * 0.9];
+                    UIFont *uiFont = nil;
+                    // ios 13 系统以上会有CTFontLogSystemFontNameRequest相关的警告。systemFontOfSize获取的字体名不可用
+                    if (@available(iOS 13.0, *)) {
+                        uiFont = [UIFont fontWithName:@"TimesNewRomanPSMT" size:fontSize * 0.9];
+                    } else {
+                        uiFont = [UIFont systemFontOfSize:fontSize * 0.9];
+                    }
                     if (uiFont) {
                         font = CTFontCreateWithName((__bridge CFStringRef)uiFont.fontName, uiFont.pointSize, NULL);
                     } else {
@@ -824,6 +845,8 @@ dispatch_semaphore_signal(_lock);
             if (attrs[YYTextHighlightAttributeName]) layout.containsHighlight = YES;
             if (attrs[YYTextBlockBorderAttributeName]) layout.needDrawBlockBorder = YES;
             if (attrs[YYTextBackgroundBorderAttributeName]) layout.needDrawBackgroundBorder = YES;
+            if (attrs[YYTextBorderAttributeName]) layout.needDrawBorder = YES;
+            if (attrs[YYTextBoldPathAttributeName]) layout.needDrawBoldPath = YES;
             if (attrs[YYTextShadowAttributeName] || attrs[NSShadowAttributeName]) layout.needDrawShadow = YES;
             if (attrs[YYTextUnderlineAttributeName]) layout.needDrawUnderline = YES;
             if (attrs[YYTextAttachmentAttributeName]) layout.needDrawAttachment = YES;
@@ -2218,40 +2241,61 @@ static void YYTextGetRunsMaxMetric(CFArrayRef runs, CGFloat *xHeight, CGFloat *u
     if (lineThickness) *lineThickness = maxLineThickness;
 }
 
-static void YYTextDrawRun(YYTextLine *line, CTRunRef run, CGContextRef context, CGSize size, BOOL isVertical, NSArray *runRanges, CGFloat verticalOffset) {
+// 增加了layout,line参数。用来获取竖直排版的对齐方式以及当前行的size
+static void YYTextDrawRun(YYTextLayout *layout, YYTextLine *line, CTRunRef run, CGContextRef context, CGSize size, BOOL isVertical, NSArray *runRanges, CGFloat verticalOffset, BOOL boldPath) {
     CGAffineTransform runTextMatrix = CTRunGetTextMatrix(run);
     BOOL runTextMatrixIsID = CGAffineTransformIsIdentity(runTextMatrix);
+    YYTextVerticalAlignment textVerticalAlignment = layout.container.textVerticalAlignment;
+    CGSize boundingSize = layout.textBoundingSize;
     
     CFDictionaryRef runAttrs = CTRunGetAttributes(run);
     NSValue *glyphTransformValue = CFDictionaryGetValue(runAttrs, (__bridge const void *)(YYTextGlyphTransformAttributeName));
+    NSDictionary *attrs = (id)CTRunGetAttributes(run);
+    
+    CTFontRef runFont = CFDictionaryGetValue(runAttrs, kCTFontAttributeName);
+    if (!runFont) return;
+    NSUInteger glyphCount = CTRunGetGlyphCount(run);
+    if (glyphCount <= 0) return;
+    
+    CGGlyph glyphs[glyphCount];
+    CGPoint glyphPositions[glyphCount];
+    CTRunGetGlyphs(run, CFRangeMake(0, 0), glyphs);
+    CTRunGetPositions(run, CFRangeMake(0, 0), glyphPositions);
+    
+    CGColorRef fillColor = (CGColorRef)CFDictionaryGetValue(runAttrs, kCTForegroundColorAttributeName);
+    fillColor = YYTextGetCGColor(fillColor);
+    NSNumber *strokeWidth = CFDictionaryGetValue(runAttrs, kCTStrokeWidthAttributeName);
+    
     if (!isVertical && !glyphTransformValue) { // draw run
         if (!runTextMatrixIsID) {
             CGContextSaveGState(context);
             CGAffineTransform trans = CGContextGetTextMatrix(context);
             CGContextSetTextMatrix(context, CGAffineTransformConcat(trans, runTextMatrix));
         }
-        CTRunDraw(run, context, CFRangeMake(0, 0));
+        if (boldPath) {
+            CGContextSaveGState(context);
+            CTFontRef runFont = CFDictionaryGetValue(runAttrs, kCTFontAttributeName);
+            if (!runFont) return;
+            YYTextBoldPath *boldPath = attrs[YYTextBoldPathAttributeName];
+            CGContextSetTextDrawingMode(context, kCGTextStroke);
+            CGContextSetStrokeColorWithColor(context, boldPath.strokeColor.CGColor);
+            CGContextSetLineWidth(context, boldPath.lineWidth);
+            CGContextSetLineJoin(context, boldPath.lineJoin);
+            CGContextSetLineCap(context, boldPath.lineGap);
+            CTRunDraw(run, context, CFRangeMake(0, 0));
+            CGContextRestoreGState(context);
+        } else {
+            CTRunDraw(run, context, CFRangeMake(0, 0));
+        }
+        
         if (!runTextMatrixIsID) {
             CGContextRestoreGState(context);
         }
     } else { // draw glyph
-        CTFontRef runFont = CFDictionaryGetValue(runAttrs, kCTFontAttributeName);
-        if (!runFont) return;
-        NSUInteger glyphCount = CTRunGetGlyphCount(run);
-        if (glyphCount <= 0) return;
-        
-        CGGlyph glyphs[glyphCount];
-        CGPoint glyphPositions[glyphCount];
-        CTRunGetGlyphs(run, CFRangeMake(0, 0), glyphs);
-        CTRunGetPositions(run, CFRangeMake(0, 0), glyphPositions);
-        
-        CGColorRef fillColor = (CGColorRef)CFDictionaryGetValue(runAttrs, kCTForegroundColorAttributeName);
-        fillColor = YYTextGetCGColor(fillColor);
-        NSNumber *strokeWidth = CFDictionaryGetValue(runAttrs, kCTStrokeWidthAttributeName);
         
         CGContextSaveGState(context); {
             CGContextSetFillColorWithColor(context, fillColor);
-            if (strokeWidth == nil || strokeWidth.floatValue == 0) {
+            if (!strokeWidth || strokeWidth.floatValue == 0) {
                 CGContextSetTextDrawingMode(context, kCGTextFill);
             } else {
                 CGColorRef strokeColor = (CGColorRef)CFDictionaryGetValue(runAttrs, kCTStrokeColorAttributeName);
@@ -2281,7 +2325,6 @@ static void YYTextDrawRun(YYTextLine *line, CTRunRef run, CGContextRef context, 
                     NSRange range = oneRange.glyphRangeInRun;
                     NSUInteger rangeMax = range.location + range.length;
                     YYTextRunGlyphDrawMode mode = oneRange.drawMode;
-                    
                     for (NSUInteger g = range.location; g < rangeMax; g++) {
                         CGContextSaveGState(context); {
                             CGContextSetTextMatrix(context, CGAffineTransformIdentity);
@@ -2304,7 +2347,34 @@ static void YYTextDrawRun(YYTextLine *line, CTRunRef run, CGContextRef context, 
                                                          line.position.y - size.height + glyphPositions[g].x,
                                                          line.position.x + verticalOffset + glyphPositions[g].y);
                             }
-                            
+                            // YYText在竖直排版时的需求不能满足当前文字编辑的要求。因为文字的起始位置始终是从顶部开始
+                            // 对局竖直居中，或者竖直距底的对齐方式来说是不满足要求的。对于这两种情况需要特除处理,更改文字的起始位置
+                            CGAffineTransform transform = CGContextGetTextMatrix(context);
+                            CGFloat topMargin = 0;
+                            if (textVerticalAlignment == YYTextVerticalAlignmentCenter) {
+                                topMargin = -(boundingSize.height - line.height) /2 ;
+                                
+                            } else if (textVerticalAlignment == YYTextVerticalAlignmentBottom) {
+                                topMargin = -(boundingSize.height - line.height);
+                            }
+                            if (mode) {
+                                transform = CGAffineTransformTranslate(transform, 0, topMargin);
+                            } else {
+                                transform = CGAffineTransformTranslate(transform, -topMargin, 0);
+                            }
+                            CGContextSetTextMatrix(context, CGAffineTransformIdentity);
+                            CGContextSetTextMatrix(context, transform);
+                            // 描边
+                            if (boldPath) {
+                                CTFontRef runFont = CFDictionaryGetValue(runAttrs, kCTFontAttributeName);
+                                if (!runFont) return;
+                                YYTextBoldPath *boldPath = attrs[YYTextBoldPathAttributeName];
+                                CGContextSetTextDrawingMode(context, kCGTextStroke);
+                                CGContextSetStrokeColorWithColor(context, boldPath.strokeColor.CGColor);
+                                CGContextSetLineWidth(context, boldPath.lineWidth);
+                                CGContextSetLineJoin(context, boldPath.lineJoin);
+                                CGContextSetLineCap(context, boldPath.lineGap);
+                            }
                             if (YYTextCTFontContainsColorBitmapGlyphs(runFont)) {
                                 CTFontDrawGlyphs(runFont, glyphs + g, &zeroPoint, 1, context);
                             } else {
@@ -2593,7 +2663,7 @@ static void YYTextDrawLineStyle(CGContextRef context, CGFloat length, CGFloat li
     } CGContextRestoreGState(context);
 }
 
-static void YYTextDrawText(YYTextLayout *layout, CGContextRef context, CGSize size, CGPoint point, BOOL (^cancel)(void)) {
+static void YYTextDrawText(YYTextLayout *layout, CGContextRef context, CGSize size, CGPoint point, BOOL boldPath, BOOL (^cancel)(void)) {
     CGContextSaveGState(context); {
         
         CGContextTranslateCTM(context, point.x, point.y);
@@ -2615,7 +2685,7 @@ static void YYTextDrawText(YYTextLayout *layout, CGContextRef context, CGSize si
                 CTRunRef run = CFArrayGetValueAtIndex(runs, r);
                 CGContextSetTextMatrix(context, CGAffineTransformIdentity);
                 CGContextSetTextPosition(context, posX, posY);
-                YYTextDrawRun(line, run, context, size, isVertical, lineRunRanges[r], verticalOffset);
+                YYTextDrawRun(layout, line, run, context, size, isVertical, lineRunRanges[r], verticalOffset, boldPath);
             }
             if (cancel && cancel()) break;
         }
@@ -2705,7 +2775,10 @@ static void YYTextDrawBorder(YYTextLayout *layout, CGContextRef context, CGSize 
     CGContextTranslateCTM(context, point.x, point.y);
     
     BOOL isVertical = layout.container.verticalForm;
-    CGFloat verticalOffset = isVertical ? (size.width - layout.container.size.width) : 0;
+//    CGFloat verticalOffset = isVertical ? (size.width - layout.container.size.width) : 0;
+    
+    YYTextVerticalAlignment textVerticalAlignment = layout.container.textVerticalAlignment;
+    CGSize boundingSize = layout.textBoundingSize;
     
     NSArray *lines = layout.lines;
     NSString *borderKey = (type == YYTextBorderTypeNormal ? YYTextBorderAttributeName : YYTextBackgroundBorderAttributeName);
@@ -2715,7 +2788,6 @@ static void YYTextDrawBorder(YYTextLayout *layout, CGContextRef context, CGSize 
     
     for (NSInteger l = 0, lMax = lines.count; l < lMax; l++) {
         if (cancel && cancel()) break;
-        
         YYTextLine *line = lines[l];
         if (layout.truncatedLine && layout.truncatedLine.index == line.index) line = layout.truncatedLine;
         CFArrayRef runs = CTLineGetGlyphRuns(line.CTLine);
@@ -2765,14 +2837,17 @@ static void YYTextDrawBorder(YYTextLayout *layout, CGContextRef context, CGSize 
                     CGFloat iRunWidth = CTRunGetTypographicBounds(iRun, CFRangeMake(0, 0), &ascent, &descent, NULL);
                     
                     if (isVertical) {
-                        YYTEXT_SWAP(iRunPosition.x, iRunPosition.y);
-                        iRunPosition.y += iLine.position.y;
-                        CGRect iRect = CGRectMake(verticalOffset + line.position.x - descent, iRunPosition.y, ascent + descent, iRunWidth);
-                        if (CGRectIsNull(extLineRect)) {
-                            extLineRect = iRect;
-                        } else {
-                            extLineRect = CGRectUnion(extLineRect, iRect);
+                        // 从测试结果上来说，竖直方向的extLineRect使用YYText的计算方式会出现值完全一样的情况。
+                        // 直接通过YYLine.bounds得到原始大小，再对居中和居底对齐做一次处理即可
+                        extLineRect = iLine.bounds;
+                        CGFloat topMargin = 0;
+                        if (textVerticalAlignment == YYTextVerticalAlignmentCenter) {
+                            topMargin = (boundingSize.height - iLine.height) /2 ;
+                            
+                        } else if (textVerticalAlignment == YYTextVerticalAlignmentBottom) {
+                            topMargin = (boundingSize.height - iLine.height);
                         }
+                        extLineRect = CGRectMake(iLine.bounds.origin.x, iLine.bounds.origin.y + topMargin, iLine.bounds.size.width, iLine.bounds.size.height);
                     } else {
                         iRunPosition.x += iLine.position.x;
                         CGRect iRect = CGRectMake(iRunPosition.x, iLine.position.y - ascent, iRunWidth, ascent + descent);
@@ -2780,6 +2855,20 @@ static void YYTextDrawBorder(YYTextLayout *layout, CGContextRef context, CGSize 
                             extLineRect = iRect;
                         } else {
                             extLineRect = CGRectUnion(extLineRect, iRect);
+                        }
+                    }
+                    if (!CGRectIsNull(extLineRect)) {
+                        CGFloat wtWidth = extLineRect.size.width;
+                        CGFloat wtHeight = extLineRect.size.height * iBorder.lineHeightMultiple;
+                        if (isVertical) {
+                            wtWidth = extLineRect.size.width * iBorder.lineHeightMultiple;
+                            wtHeight = extLineRect.size.height;
+                        }
+                        CGFloat xDelta = extLineRect.size.width - wtWidth;
+                        CGFloat yDelta = extLineRect.size.height - wtHeight;
+                        extLineRect = CGRectMake(extLineRect.origin.x + xDelta/2, extLineRect.origin.y + yDelta/2, wtWidth, wtHeight);
+                        if (isVertical) {
+                            extLineRect = CGRectMake(extLineRect.origin.x - xDelta/2, extLineRect.origin.y + yDelta/2, wtWidth, wtHeight);
                         }
                     }
                 }
@@ -2901,7 +2990,7 @@ static void YYTextDrawDecoration(YYTextLayout *layout, CGContextRef context, CGS
                     color = (__bridge CGColorRef)(attrs[(id)kCTForegroundColorAttributeName]);
                     color = YYTextGetCGColor(color);
                 }
-                CGFloat thickness = (underline.width != nil) ? underline.width.floatValue : lineThickness;
+                CGFloat thickness = underline.width ? underline.width.floatValue : lineThickness;
                 YYTextShadow *shadow = underline.shadow;
                 while (shadow) {
                     if (!shadow.color) {
@@ -2930,7 +3019,7 @@ static void YYTextDrawDecoration(YYTextLayout *layout, CGContextRef context, CGS
                     color = (__bridge CGColorRef)(attrs[(id)kCTForegroundColorAttributeName]);
                     color = YYTextGetCGColor(color);
                 }
-                CGFloat thickness = (strikethrough.width != nil) ? strikethrough.width.floatValue : lineThickness;
+                CGFloat thickness = strikethrough.width ? strikethrough.width.floatValue : lineThickness;
                 YYTextShadow *shadow = underline.shadow;
                 while (shadow) {
                     if (!shadow.color) {
@@ -3055,7 +3144,7 @@ static void YYTextDrawShadow(YYTextLayout *layout, CGContextRef context, CGSize 
                         CGContextSetShadowWithColor(context, offset, shadow.radius, shadow.color.CGColor);
                         CGContextSetBlendMode(context, shadow.blendMode);
                         CGContextTranslateCTM(context, offsetAlterX, 0);
-                        YYTextDrawRun(line, run, context, size, isVertical, lineRunRanges[r], verticalOffset);
+                        YYTextDrawRun(layout, line, run, context, size, isVertical, lineRunRanges[r], verticalOffset, NO);
                     } CGContextRestoreGState(context);
                     shadow = shadow.subShadow;
                 }
@@ -3123,7 +3212,7 @@ static void YYTextDrawInnerShadow(YYTextLayout *layout, CGContextRef context, CG
                             CGContextFillRect(context, runImageBounds);
                             CGContextSetBlendMode(context, kCGBlendModeDestinationIn);
                             CGContextBeginTransparencyLayer(context, NULL); {
-                                YYTextDrawRun(line, run, context, size, isVertical, lineRunRanges[r], verticalOffset);
+                                YYTextDrawRun(layout, line, run, context, size, isVertical, lineRunRanges[r], verticalOffset, NO);
                             } CGContextEndTransparencyLayer(context);
                         } CGContextEndTransparencyLayer(context);
                     } CGContextEndTransparencyLayer(context);
@@ -3353,9 +3442,13 @@ static void YYTextDrawDebug(YYTextLayout *layout, CGContextRef context, CGSize s
             if (cancel && cancel()) return;
             YYTextDrawDecoration(self, context, size, point, YYTextDecorationTypeUnderline, cancel);
         }
+        if (self.needDrawBoldPath && context) {
+            if (cancel && cancel()) return;
+            YYTextDrawText(self, context, size, point, YES, cancel);
+        }
         if (self.needDrawText && context) {
             if (cancel && cancel()) return;
-            YYTextDrawText(self, context, size, point, cancel);
+            YYTextDrawText(self, context, size, point, NO, cancel);
         }
         if (self.needDrawAttachment && (context || view || layer)) {
             if (cancel && cancel()) return;

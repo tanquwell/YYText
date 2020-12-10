@@ -35,9 +35,9 @@ extern const CGSize YYTextContainerMaxSize;
  The YYTextContainer class defines a region in which text is laid out.
  YYTextLayout class uses one or more YYTextContainer objects to generate layouts.
  
- A YYTextContainer defines rectangular regions (`size` and `insets`) or 
- nonrectangular shapes (`path`), and you can define exclusion paths inside the 
- text container's bounding rectangle so that text flows around the exclusion 
+ A YYTextContainer defines rectangular regions (`size` and `insets`) or
+ nonrectangular shapes (`path`), and you can define exclusion paths inside the
+ text container's bounding rectangle so that text flows around the exclusion
  path as it is laid out.
  
  All methods in this class is thread-safe.
@@ -64,7 +64,7 @@ extern const CGSize YYTextContainerMaxSize;
 /// Creates a container with the specified size and insets. @param size The size. @param insets The text insets.
 + (instancetype)containerWithSize:(CGSize)size insets:(UIEdgeInsets)insets;
 
-/// Creates a container with the specified path. @param path The path.
+/// Creates a container with the specified path. @param size The path.
 + (instancetype)containerWithPath:(nullable UIBezierPath *)path;
 
 /// The constrained size. (if the size is larger than YYTextContainerMaxSize, it will be clipped)
@@ -89,6 +89,9 @@ extern const CGSize YYTextContainerMaxSize;
 
 /// Whether the text is vertical form (may used for CJK text layout). Default is NO.
 @property (getter=isVerticalForm) BOOL verticalForm;
+
+/// 文字的竖直方向对齐方式
+@property YYTextVerticalAlignment textVerticalAlignment;
 
 /// Maximum number of rows, 0 means no limit. Default is 0.
 @property NSUInteger maximumNumberOfRows;
@@ -255,6 +258,8 @@ extern const CGSize YYTextContainerMaxSize;
 @property (nonatomic, readonly) BOOL needDrawBlockBorder;
 ///< Has background border attribute
 @property (nonatomic, readonly) BOOL needDrawBackgroundBorder;
+/// 包含加粗路径绘制
+@property (nonatomic, readonly) BOOL needDrawBoldPath;
 ///< Has shadow attribute
 @property (nonatomic, readonly) BOOL needDrawShadow;
 ///< Has underline attribute
@@ -334,7 +339,7 @@ extern const CGSize YYTextContainerMaxSize;
 /**
  The text position for a point in a specified line.
  
- @discussion This method just call CTLineGetStringIndexForPosition() and does 
+ @discussion This method just call CTLineGetStringIndexForPosition() and does
  NOT consider the emoji, line break character, binding text...
  
  @param point      A point in the container.
@@ -346,7 +351,7 @@ extern const CGSize YYTextContainerMaxSize;
 /**
  The closest text position to a specified point.
  
- @discussion This method takes into account the restrict of emoji, line break 
+ @discussion This method takes into account the restrict of emoji, line break
  character, binding text and text affinity.
  
  @param point  A point in the container.
@@ -357,7 +362,7 @@ extern const CGSize YYTextContainerMaxSize;
 /**
  Returns the new position when moving selection grabber in text view.
  
- @discussion There are two grabber in the text selection period, user can only 
+ @discussion There are two grabber in the text selection period, user can only
  move one grabber at the same time.
  
  @param point          A point in the container.
@@ -378,13 +383,13 @@ extern const CGSize YYTextContainerMaxSize;
  character, binding text and text affinity.
  
  @param point  A point in the container.
- @return An object representing a range that encloses a character (or characters) 
+ @return An object representing a range that encloses a character (or characters)
  at point. Or nil if not found.
  */
 - (nullable YYTextRange *)textRangeAtPoint:(CGPoint)point;
 
 /**
- Returns the closest character or range of characters that is at a given point in 
+ Returns the closest character or range of characters that is at a given point in
  the container.
  
  @discussion This method takes into account the restrict of emoji, line break
@@ -408,7 +413,7 @@ extern const CGSize YYTextContainerMaxSize;
 - (nullable YYTextRange *)textRangeByExtendingPosition:(YYTextPosition *)position;
 
 /**
- Returns a text range at a given offset in a specified direction from another 
+ Returns a text range at a given offset in a specified direction from another
  text position to its farthest extent in a certain direction of layout.
  
  @param position  A text-position object that identifies a location in layout.
@@ -455,8 +460,8 @@ extern const CGSize YYTextContainerMaxSize;
  
  @param range An object that represents a range of text in layout.
  
- @return The first rectangle in a range of text. You might use this rectangle to 
- draw a correction rectangle. The "first" in the name refers the rectangle 
+ @return The first rectangle in a range of text. You might use this rectangle to
+ draw a correction rectangle. The "first" in the name refers the rectangle
  enclosing the first line when the range encompasses multiple lines of text.
  If not found, it returns CGRectNull.
  */
@@ -512,10 +517,10 @@ extern const CGSize YYTextContainerMaxSize;
  
  @discussion If the `view` parameter is not nil, then the attachment views will
  add to this `view`, and if the `layer` parameter is not nil, then the attachment
- layers will add to this `layer`. 
+ layers will add to this `layer`.
  
  @warning This method should be called on main thread if `view` or `layer` parameter
- is not nil and there's UIView or CALayer attachments in layout. 
+ is not nil and there's UIView or CALayer attachments in layout.
  Otherwise, it can be called on any thread.
  
  @param context The draw context. Pass nil to avoid text and image drawing.

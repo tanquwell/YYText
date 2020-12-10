@@ -361,6 +361,7 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
     _exclusionPaths = _innerContainer.exclusionPaths;
     _textContainerInset = _innerContainer.insets;
     _verticalForm = _innerContainer.verticalForm;
+    _textVerticalAlignment = _innerContainer.textVerticalAlignment;
     _linePositionModifier = _innerContainer.linePositionModifier;
     [self _updateOuterLineBreakMode];
 }
@@ -396,6 +397,7 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
     _innerContainer = [YYTextContainer new];
     _innerContainer.truncationType = YYTextTruncationTypeEnd;
     _innerContainer.maximumNumberOfRows = _numberOfLines;
+    _innerContainer.textVerticalAlignment = _textVerticalAlignment;
     _clearContentsBeforeAsynchronouslyDisplay = YES;
     _fadeOnAsynchronouslyDisplay = YES;
     _fadeOnHighlight = YES;
@@ -808,6 +810,7 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
 - (void)setTextVerticalAlignment:(YYTextVerticalAlignment)textVerticalAlignment {
     if (_textVerticalAlignment == textVerticalAlignment) return;
     _textVerticalAlignment = textVerticalAlignment;
+    _innerContainer.textVerticalAlignment = textVerticalAlignment;
     if (_innerText.length && !_ignoreCommonProperties) {
         if (_displaysAsynchronously && _clearContentsBeforeAsynchronouslyDisplay) {
             [self _clearContents];
@@ -1078,7 +1081,7 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
     
     // create display task
     YYTextAsyncLayerDisplayTask *task = [YYTextAsyncLayerDisplayTask new];
-    
+    __weak typeof(self) weakSelf = self;
     task.willDisplay = ^(CALayer *layer) {
         [layer removeAnimationForKey:@"contents"];
         
@@ -1117,19 +1120,34 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
         
         CGSize boundingSize = drawLayout.textBoundingSize;
         CGPoint point = CGPointZero;
+        /// 由于kern不为0时，字体的advance(可以认为是字体的绘制宽度范围)会变大,YYText的算法在竖直排版，且下对齐的情况下会导致绘制超出了label的范围
+        /// 可以在YYTextDrawRun方法中搜索CTRunGetAdvances关键字。了解到kern与Advance的关系
+        /// 这里直接在文字初始绘制位置做更改也是单单为了实现图片编辑模块中的文字排版，该功能的字间距kern在每个文字上都是相同的，不具备移植到其他项目的条件
+        /// 如果需要具备普适性，则要对【竖直排版，且下对齐】情况下更改YYTextLayout的 drawInContext:size:point:view:layer:debug:cancel内的每一个绘制方法的排版计算
+        CGFloat kern = 0;
+        if (layout.needDrawBoldPath) {
+            kern = [[[layout.text yy_attributesAtIndex:0] objectForKey:NSKernAttributeName] floatValue];
+        }
+        /// 竖直方向的绘制由于产品要求，整体文字总是居中显示。所以在居底和居顶，重设了point.x的距离
+        /// 对于居中和居底重设了point.y的距离
         if (verticalAlignment == YYTextVerticalAlignmentCenter) {
             if (drawLayout.container.isVerticalForm) {
                 point.x = -(size.width - boundingSize.width) * 0.5;
+                point.y = (size.height - boundingSize.height) * 0.5;
             } else {
                 point.y = (size.height - boundingSize.height) * 0.5;
             }
         } else if (verticalAlignment == YYTextVerticalAlignmentBottom) {
             if (drawLayout.container.isVerticalForm) {
-                point.x = -(size.width - boundingSize.width);
+                point.x = -(size.width - boundingSize.width) * 0.5;
+                point.y = (size.height - boundingSize.height);
             } else {
                 point.y = (size.height - boundingSize.height);
             }
+        } else {
+            point.x = -(size.width - boundingSize.width) * 0.5;
         }
+        point.x += kern;
         point = YYTextCGPointPixelRound(point);
         [drawLayout drawInContext:context size:size point:point view:nil layer:nil debug:debug cancel:isCancelled];
     };
@@ -1170,12 +1188,14 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
         if (verticalAlignment == YYTextVerticalAlignmentCenter) {
             if (drawLayout.container.isVerticalForm) {
                 point.x = -(size.width - boundingSize.width) * 0.5;
+                point.y = (size.height - boundingSize.height) * 0.5;
             } else {
                 point.y = (size.height - boundingSize.height) * 0.5;
             }
         } else if (verticalAlignment == YYTextVerticalAlignmentBottom) {
             if (drawLayout.container.isVerticalForm) {
                 point.x = -(size.width - boundingSize.width);
+                point.y = (size.height - boundingSize.height);
             } else {
                 point.y = (size.height - boundingSize.height);
             }
@@ -1199,6 +1219,10 @@ static dispatch_queue_t YYLabelGetReleaseQueue() {
             transition.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseOut];
             transition.type = kCATransitionFade;
             [layer addAnimation:transition forKey:@"contents"];
+        }
+        __strong typeof(self) strongSelf = weakSelf;
+        if (strongSelf.textDidDrawCallBack) {
+            strongSelf.textDidDrawCallBack();
         }
     };
     

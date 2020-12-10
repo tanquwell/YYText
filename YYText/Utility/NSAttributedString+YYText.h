@@ -56,10 +56,10 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Returns the attributes for the character at a given index.
  
- @discussion Raises an `NSRangeException` if index lies beyond the end of the 
+ @discussion Raises an `NSRangeException` if index lies beyond the end of the
  receiver's characters.
  
- @param index  The index for which to return attributes. 
+ @param index  The index for which to return attributes.
  This value must lie within the bounds of the receiver.
  
  @return The attributes for the character at index.
@@ -73,10 +73,10 @@ NS_ASSUME_NONNULL_BEGIN
  receiver's characters.
  
  @param attributeName  The name of an attribute.
- @param index          The index for which to return attributes. 
+ @param index          The index for which to return attributes.
  This value must not exceed the bounds of the receiver.
  
- @return The value for the attribute named `attributeName` of the character at 
+ @return The value for the attribute named `attributeName` of the character at
  index `index`, or nil if there is no such attribute.
  */
 - (nullable id)yy_attribute:(NSString *)attributeName atIndex:(NSUInteger)index;
@@ -100,11 +100,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  A kerning adjustment. (read-only)
  
- @discussion Default is standard kerning. The kerning attribute indicate how many 
- points the following character should be shifted from its default offset as 
- defined by the current character's font in points; a positive kern indicates a 
- shift farther along and a negative kern indicates a shift closer to the current 
- character. If this attribute is not present, standard kerning will be used. 
+ @discussion Default is standard kerning. The kerning attribute indicate how many
+ points the following character should be shifted from its default offset as
+ defined by the current character's font in points; a positive kern indicates a
+ shift farther along and a negative kern indicates a shift closer to the current
+ character. If this attribute is not present, standard kerning will be used.
  If this attribute is set to 0.0, no kerning will be done at all.
  @discussion Get this property returns the first character's attribute.
  @since CoreText:3.2  UIKit:6.0  YYText:6.0
@@ -136,7 +136,7 @@ NS_ASSUME_NONNULL_BEGIN
  The stroke width. (read-only)
  
  @discussion Default value is 0.0 (no stroke). This attribute, interpreted as
- a percentage of font point size, controls the text drawing mode: positive 
+ a percentage of font point size, controls the text drawing mode: positive
  values effect drawing with stroke only; negative values are for stroke and fill.
  A typical value for outlined text is 3.0.
  @discussion Get this property returns the first character's attribute.
@@ -208,11 +208,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Ligature formation control. (read-only)
  
- @discussion Default is int value 1. The ligature attribute determines what kinds 
- of ligatures should be used when displaying the string. A value of 0 indicates 
- that only ligatures essential for proper rendering of text should be used, 
- 1 indicates that standard ligatures should be used, and 2 indicates that all 
- available ligatures should be used. Which ligatures are standard depends on the 
+ @discussion Default is int value 1. The ligature attribute determines what kinds
+ of ligatures should be used when displaying the string. A value of 0 indicates
+ that only ligatures essential for proper rendering of text should be used,
+ 1 indicates that standard ligatures should be used, and 2 indicates that all
+ available ligatures should be used. Which ligatures are standard depends on the
  script and possibly the font.
  @discussion Get this property returns the first character's attribute.
  @since CoreText:3.2  UIKit:6.0  YYText:6.0
@@ -264,7 +264,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Glyph orientation control. (read-only)
  
- @discussion Default is NO. A value of NO indicates that horizontal glyph forms 
+ @discussion Default is NO. A value of NO indicates that horizontal glyph forms
  are to be used, YES indicates that vertical glyph forms are to be used.
  @discussion Get this property returns the first character's attribute.
  @since CoreText:4.3  YYText:6.0
@@ -275,8 +275,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Specifies text language. (read-only)
  
- @discussion Value must be a NSString containing a locale identifier. Default is 
- unset. When this attribute is set to a valid identifier, it will be used to select 
+ @discussion Value must be a NSString containing a locale identifier. Default is
+ unset. When this attribute is set to a valid identifier, it will be used to select
  localized glyphs (if supported by the font) and locale-specific line breaking rules.
  @discussion Get this property returns the first character's attribute.
  @since CoreText:7.0  YYText:7.0
@@ -313,7 +313,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The text alignment (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion Natural text alignment is realized as left or right alignment 
+ @discussion Natural text alignment is realized as left or right alignment
  depending on the line sweep direction of the first script contained in the paragraph.
  @discussion Default is NSTextAlignmentNatural.
  @discussion Get this property returns the first character's attribute.
@@ -337,7 +337,7 @@ NS_ASSUME_NONNULL_BEGIN
  The distance in points between the bottom of one line fragment and the top of the next.
  (A wrapper for NSParagraphStyle) (read-only)
  
- @discussion This value is always nonnegative. This value is included in the line 
+ @discussion This value is always nonnegative. This value is included in the line
  fragment heights in the layout manager.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -349,9 +349,9 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The space after the end of the paragraph (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the space (measured in points) added at the 
+ @discussion This property contains the space (measured in points) added at the
  end of the paragraph to separate it from the following paragraph. This value must
- be nonnegative. The space between paragraphs is determined by adding the previous 
+ be nonnegative. The space between paragraphs is determined by adding the previous
  paragraph's paragraphSpacing and the current paragraph's paragraphSpacingBefore.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -364,7 +364,7 @@ NS_ASSUME_NONNULL_BEGIN
  The distance between the paragraph's top and the beginning of its text content.
  (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the space (measured in points) between the 
+ @discussion This property contains the space (measured in points) between the
  paragraph's top and the beginning of its text content.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -376,8 +376,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The indentation of the first line (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the distance (in points) from the leading margin 
- of a text container to the beginning of the paragraph's first line. This value 
+ @discussion This property contains the distance (in points) from the leading margin
+ of a text container to the beginning of the paragraph's first line. This value
  is always nonnegative.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -389,8 +389,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The indentation of the receiver's lines other than the first. (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the distance (in points) from the leading margin 
- of a text container to the beginning of lines other than the first. This value is 
+ @discussion This property contains the distance (in points) from the leading margin
+ of a text container to the beginning of lines other than the first. This value is
  always nonnegative.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -402,8 +402,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The trailing indentation (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion If positive, this value is the distance from the leading margin 
- (for example, the left margin in left-to-right text). If 0 or negative, it's the 
+ @discussion If positive, this value is the distance from the leading margin
+ (for example, the left margin in left-to-right text). If 0 or negative, it's the
  distance from the trailing margin.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -415,8 +415,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The receiver's minimum height (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the minimum height in points that any line in 
- the receiver will occupy, regardless of the font size or size of any attached graphic. 
+ @discussion This property contains the minimum height in points that any line in
+ the receiver will occupy, regardless of the font size or size of any attached graphic.
  This value must be nonnegative.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -428,10 +428,10 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The receiver's maximum line height (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property contains the maximum height in points that any line in 
- the receiver will occupy, regardless of the font size or size of any attached graphic. 
- This value is always nonnegative. Glyphs and graphics exceeding this height will 
- overlap neighboring lines; however, a maximum height of 0 implies no line height limit. 
+ @discussion This property contains the maximum height in points that any line in
+ the receiver will occupy, regardless of the font size or size of any attached graphic.
+ This value is always nonnegative. Glyphs and graphics exceeding this height will
+ overlap neighboring lines; however, a maximum height of 0 implies no line height limit.
  Although this limit applies to the line itself, line spacing adds extra space between adjacent lines.
  @discussion Default is 0 (no limit).
  @discussion Get this property returns the first character's attribute.
@@ -454,8 +454,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The base writing direction (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion If you specify NSWritingDirectionNaturalDirection, the receiver resolves 
- the writing direction to either NSWritingDirectionLeftToRight or NSWritingDirectionRightToLeft, 
+ @discussion If you specify NSWritingDirectionNaturalDirection, the receiver resolves
+ the writing direction to either NSWritingDirectionLeftToRight or NSWritingDirectionRightToLeft,
  depending on the direction for the user's `language` preference setting.
  @discussion Default is NSWritingDirectionNatural.
  @discussion Get this property returns the first character's attribute.
@@ -467,10 +467,10 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The paragraph's threshold for hyphenation. (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion Valid values lie between 0.0 and 1.0 inclusive. Hyphenation is attempted 
- when the ratio of the text width (as broken without hyphenation) to the width of the 
- line fragment is less than the hyphenation factor. When the paragraph's hyphenation 
- factor is 0.0, the layout manager's hyphenation factor is used instead. When both 
+ @discussion Valid values lie between 0.0 and 1.0 inclusive. Hyphenation is attempted
+ when the ratio of the text width (as broken without hyphenation) to the width of the
+ line fragment is less than the hyphenation factor. When the paragraph's hyphenation
+ factor is 0.0, the layout manager's hyphenation factor is used instead. When both
  are 0.0, hyphenation is disabled.
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -482,7 +482,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  The document-wide default tab interval (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion This property represents the default tab interval in points. Tabs after the 
+ @discussion This property represents the default tab interval in points. Tabs after the
  last specified in tabStops are placed at integer multiples of this distance (if positive).
  @discussion Default is 0.
  @discussion Get this property returns the first character's attribute.
@@ -495,7 +495,7 @@ NS_ASSUME_NONNULL_BEGIN
  An array of NSTextTab objects representing the receiver's tab stops.
  (A wrapper for NSParagraphStyle). (read-only)
  
- @discussion The NSTextTab objects, sorted by location, define the tab stops for 
+ @discussion The NSTextTab objects, sorted by location, define the tab stops for
  the paragraph style.
  @discussion Default is 12 TabStops with 28.0 tab interval.
  @discussion Get this property returns the first character's attribute.
@@ -569,6 +569,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readonly) YYTextBorder *yy_textBackgroundBorder;
 - (nullable YYTextBorder *)yy_textBackgroundBorderAtIndex:(NSUInteger)index;
 
+/// 加粗绘制的文字路径
+@property (nullable, nonatomic, strong, readonly) YYTextBoldPath *yy_textBoldPath;
 /**
  The glyph transform. (read-only)
  
@@ -641,7 +643,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param content        The attachment (UIImage/UIView/CALayer).
  @param contentMode    The attachment's content mode in attachment holder
  @param attachmentSize The attachment holder's size in text layout.
- @param font           The attachment will align to this font.
+ @param fontSize       The attachment will align to this font.
  @param alignment      The attachment holder's alignment to text line.
  
  @return An attributed string, or nil if an error occurs.
@@ -684,7 +686,7 @@ NS_ASSUME_NONNULL_BEGIN
  If YES, it can be drawn with the [drawWithRect:options:context:] method or displayed with UIKit.
  If NO, it should be drawn with CoreText or YYText.
  
- @discussion If the method returns NO, it means that there's at least one attribute 
+ @discussion If the method returns NO, it means that there's at least one attribute
  which is not supported by UIKit (such as CTParagraphStyleRef). If display this string
  in UIKit, it may lose some attribute, or even crash the app.
  */
@@ -762,11 +764,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  A kerning adjustment.
  
- @discussion Default is standard kerning. The kerning attribute indicate how many 
- points the following character should be shifted from its default offset as 
- defined by the current character's font in points; a positive kern indicates a 
- shift farther along and a negative kern indicates a shift closer to the current 
- character. If this attribute is not present, standard kerning will be used. 
+ @discussion Default is standard kerning. The kerning attribute indicate how many
+ points the following character should be shifted from its default offset as
+ defined by the current character's font in points; a positive kern indicates a
+ shift farther along and a negative kern indicates a shift closer to the current
+ character. If this attribute is not present, standard kerning will be used.
  If this attribute is set to 0.0, no kerning will be done at all.
  @discussion Set this property applies to the entire text string.
              Get this property returns the first character's attribute.
@@ -801,7 +803,7 @@ NS_ASSUME_NONNULL_BEGIN
  The stroke width.
  
  @discussion Default value is 0.0 (no stroke). This attribute, interpreted as
- a percentage of font point size, controls the text drawing mode: positive 
+ a percentage of font point size, controls the text drawing mode: positive
  values effect drawing with stroke only; negative values are for stroke and fill.
  A typical value for outlined text is 3.0.
  @discussion Set this property applies to the entire text string.
@@ -880,11 +882,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Ligature formation control.
  
- @discussion Default is int value 1. The ligature attribute determines what kinds 
- of ligatures should be used when displaying the string. A value of 0 indicates 
- that only ligatures essential for proper rendering of text should be used, 
- 1 indicates that standard ligatures should be used, and 2 indicates that all 
- available ligatures should be used. Which ligatures are standard depends on the 
+ @discussion Default is int value 1. The ligature attribute determines what kinds
+ of ligatures should be used when displaying the string. A value of 0 indicates
+ that only ligatures essential for proper rendering of text should be used,
+ 1 indicates that standard ligatures should be used, and 2 indicates that all
+ available ligatures should be used. Which ligatures are standard depends on the
  script and possibly the font.
  @discussion Set this property applies to the entire text string.
              Get this property returns the first character's attribute.
@@ -906,7 +908,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)yy_setTextEffect:(nullable NSString *)textEffect range:(NSRange)range NS_AVAILABLE_IOS(7_0);
 
 /**
- The skew to be applied to glyphs. 
+ The skew to be applied to glyphs.
  
  @discussion Default is 0 (no skew).
  @discussion Set this property applies to the entire text string.
@@ -928,7 +930,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)yy_setExpansion:(nullable NSNumber *)expansion range:(NSRange)range NS_AVAILABLE_IOS(7_0);
 
 /**
- The character's offset from the baseline, in points. 
+ The character's offset from the baseline, in points.
  
  @discussion Default is 0.
  @discussion Set this property applies to the entire text string.
@@ -941,7 +943,7 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Glyph orientation control.
  
- @discussion Default is NO. A value of NO indicates that horizontal glyph forms 
+ @discussion Default is NO. A value of NO indicates that horizontal glyph forms
  are to be used, YES indicates that vertical glyph forms are to be used.
  @discussion Set this property applies to the entire text string.
              Get this property returns the first character's attribute.
@@ -953,8 +955,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Specifies text language.
  
- @discussion Value must be a NSString containing a locale identifier. Default is 
- unset. When this attribute is set to a valid identifier, it will be used to select 
+ @discussion Value must be a NSString containing a locale identifier. Default is
+ unset. When this attribute is set to a valid identifier, it will be used to select
  localized glyphs (if supported by the font) and locale-specific line breaking rules.
  @discussion Set this property applies to the entire text string.
              Get this property returns the first character's attribute.
@@ -1272,6 +1274,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong, readwrite) YYTextBorder *yy_textBackgroundBorder;
 - (void)yy_setTextBackgroundBorder:(nullable YYTextBorder *)textBackgroundBorder range:(NSRange)range;
 
+/// 加粗绘制的文字轨迹
+@property (nullable, nonatomic, strong, readwrite) YYTextBoldPath *yy_textBoldPath;
+- (void)yy_setTextBoldPath:(nullable YYTextBoldPath *)yy_textBoldPath;
+
 /**
  The glyph transform.
  
@@ -1365,7 +1371,7 @@ NS_ASSUME_NONNULL_BEGIN
  The new string inherit the attributes of the first replaced character from location.
  
  @param string  The string to insert into the receiver, must not be nil.
- @param location The location at which string is inserted. The location must not 
+ @param location The location at which string is inserted. The location must not
     exceed the bounds of the receiver.
  @throw Raises an NSRangeException if the location out of bounds.
  */
@@ -1383,7 +1389,7 @@ NS_ASSUME_NONNULL_BEGIN
  Set foreground color with [UIColor clearColor] in joined-emoji range.
  Emoji drawing will not be affected by the foreground color.
  
- @discussion In iOS 8.3, Apple releases some new diversified emojis. 
+ @discussion In iOS 8.3, Apple releases some new diversified emojis.
  There's some single emoji which can be assembled to a new 'joined-emoji'.
  The joiner is unicode character 'ZERO WIDTH JOINER' (U+200D).
  For example: 👨👩👧👧 -> 👨‍👩‍👧‍👧.
